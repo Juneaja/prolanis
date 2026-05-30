@@ -1,0 +1,6 @@
+{
+  "name": "Catatan Kegiatan Prolanis BPJS",
+  "description": "Aplikasi untuk memantau data kesehatan dan kegiatan peserta Prolanis BPJS, mencatat gula darah, tekanan darah, serta mendeteksi progres bulanan dan pengingat kontrol otomatis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

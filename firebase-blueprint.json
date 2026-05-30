@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "Peserta": {
+      "title": "Peserta",
+      "description": "Data peserta Prolanis aktif",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nama": { "type": "string" },
+        "noBpjs": { "type": "string" },
+        "umur": { "type": "number" },
+        "kontak": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "nama", "noBpjs", "umur", "diagnosis", "createdAt"]
+    },
+    "HealthLog": {
+      "title": "HealthLog",
+      "description": "Log hasil pemeriksaan kesehatan peserta harian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pesertaId": { "type": "string" },
+        "tanggal": { "type": "string" },
+        "gulaDarah": { "type": "number" },
+        "sistolik": { "type": "number" },
+        "diastolik": { "type": "number" },
+        "catatan": { "type": "string" },
+        "statusGulaDarah": { "type": "string" },
+        "statusTekananDarah": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "pesertaId", "tanggal", "gulaDarah", "sistolik", "diastolik", "createdAt"]
+    },
+    "JadwalKontrol": {
+      "title": "JadwalKontrol",
+      "description": "Jadwal kontrol rutin, senam, dan kelas edukasi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pesertaId": { "type": "string" },
+        "pesertaNama": { "type": "string" },
+        "tipe": { "type": "string" },
+        "tanggal": { "type": "string" },
+        "pukul": { "type": "string" },
+        "lokasi": { "type": "string" },
+        "status": { "type": "string" },
+        "catatan": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "pesertaId", "pesertaNama", "tipe", "tanggal", "pukul", "lokasi", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Sistem pemberitahuan otomatis",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "pesertaId": { "type": "string" },
+        "judul": { "type": "string" },
+        "pesan": { "type": "string" },
+        "tanggal": { "type": "string" },
+        "dibaca": { "type": "boolean" },
+        "tipe": { "type": "string" }
+      },
+      "required": ["id", "pesertaId", "judul", "pesan", "tanggal", "dibaca", "tipe"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Konfigurasi tampilan aplikasi Puskesmas",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "logo": { "type": "string" },
+        "favicon": { "type": "string" },
+        "footerText": { "type": "string" },
+        "logoFooter": { "type": "string" }
+      },
+      "required": ["id"]
+    },
+    "VideoEdukasi": {
+      "title": "VideoEdukasi",
+      "description": "Materi edukasi kesehatan pasien melalui video YouTube",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "judul": { "type": "string" },
+        "url": { "type": "string" },
+        "deskripsi": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "judul", "url", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/peserta/{pesertaId}": {
+      "schema": { "$ref": "#/entities/Peserta" },
+      "description": "Data peserta kesehatan kronis"
+    },
+    "/logs/{logId}": {
+      "schema": { "$ref": "#/entities/HealthLog" },
+      "description": "Catatan medis hasil lab/pemeriksaan harian"
+    },
+    "/jadwal/{jadwalId}": {
+      "schema": { "$ref": "#/entities/JadwalKontrol" },
+      "description": "Rencana agenda kunjungan medikasi dan senam"
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Notifikasi/peringatan kesehatan untuk peserta"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "Identitas logo, favicon, dan teks footer global"
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "#/entities/VideoEdukasi" },
+      "description": "Daftar link video YouTube untuk materi edukasi prolanis"
+    }
+  }
+}
