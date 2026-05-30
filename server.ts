@@ -170,6 +170,16 @@ const initialNotifications: Notification[] = [
   }
 ];
 
+// Helper to run promises with a timeout to withstand potential offline/slow database gateways
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 2500): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error("Koneksi database Prolanis Firebase melampaui batas waktu.")), timeoutMs)
+    )
+  ]);
+}
+
 // Helper to load/save database
 async function loadDb() {
   try {
@@ -180,7 +190,7 @@ async function loadDb() {
       favicon: "",
       footerText: "© 2026 Admin BPJS Kesehatan • Keamanan Otentikasi Klinik Berlapis • Enkripsi Sesi Medis Aktif"
     };
-    const settingsDoc = await getDoc(doc(db, "settings", "app-settings"));
+    const settingsDoc = await withTimeout(getDoc(doc(db, "settings", "app-settings")));
     if (settingsDoc.exists()) {
       settings = { ...settings, ...settingsDoc.data() };
     } else {
@@ -188,27 +198,27 @@ async function loadDb() {
     }
 
     // 2. Peserta
-    const pesertaSnap = await getDocs(collection(db, "peserta"));
+    const pesertaSnap = await withTimeout(getDocs(collection(db, "peserta")));
     let pesertaList: any[] = [];
     pesertaSnap.forEach(d => pesertaList.push(d.data()));
 
     // 3. HealthLogs
-    const logsSnap = await getDocs(collection(db, "logs"));
+    const logsSnap = await withTimeout(getDocs(collection(db, "logs")));
     let logsList: any[] = [];
     logsSnap.forEach(d => logsList.push(d.data()));
 
     // 4. Jadwal
-    const jadwalSnap = await getDocs(collection(db, "jadwal"));
+    const jadwalSnap = await withTimeout(getDocs(collection(db, "jadwal")));
     let jadwalList: any[] = [];
     jadwalSnap.forEach(d => jadwalList.push(d.data()));
 
     // 5. Notifications
-    const notificationSnap = await getDocs(collection(db, "notifications"));
+    const notificationSnap = await withTimeout(getDocs(collection(db, "notifications")));
     let notificationList: any[] = [];
     notificationSnap.forEach(d => notificationList.push(d.data()));
 
     // 6. Videos
-    const videosSnap = await getDocs(collection(db, "videos"));
+    const videosSnap = await withTimeout(getDocs(collection(db, "videos")));
     let videosList: any[] = [];
     videosSnap.forEach(d => videosList.push(d.data()));
 
