@@ -10,12 +10,24 @@ import { Peserta, HealthLog, JadwalKontrol, Notification, MonthlyReport, AppSett
 // Configuration
 const PORT = 3000;
 
-// Initialize Firebase
-const firebaseConfig = JSON.parse(
-  fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf-8')
-);
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+// Initialize Firebase with transparent filesystem fallback
+let db: any = null;
+let useFirebase = false;
+
+try {
+  const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(configPath)) {
+    const firebaseConfig = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    useFirebase = true;
+    console.log("Firebase Firestore initialized successfully.");
+  } else {
+    console.warn("firebase-applet-config.json not found. Falling back to local data-prolanis.json storage.");
+  }
+} catch (error) {
+  console.error("Firebase initialization failed, falling back to local JSON storage:", error);
+}
 
 // Initialize Gemini Client
 
@@ -170,6 +182,44 @@ const initialNotifications: Notification[] = [
   }
 ];
 
+const LOCAL_JSON_PATH = path.join(process.cwd(), 'data-prolanis.json');
+let localMemoryDb: any = null;
+
+function loadLocalJson() {
+  if (localMemoryDb) return localMemoryDb;
+  try {
+    if (fs.existsSync(LOCAL_JSON_PATH)) {
+      const content = fs.readFileSync(LOCAL_JSON_PATH, 'utf-8');
+      localMemoryDb = JSON.parse(content);
+      return localMemoryDb;
+    }
+  } catch (err) {
+    console.error("Error reading local database file, falling back to initial seeds:", err);
+  }
+  localMemoryDb = {
+    peserta: initialPeserta,
+    logs: initialLogs,
+    jadwal: initialJadwal,
+    notifications: initialNotifications,
+    videos: [],
+    settings: {
+      logo: "",
+      logoFooter: "",
+      favicon: "",
+      footerText: "© 2026 Admin BPJS Kesehatan • Keamanan Otentikasi Klinik Berlapis • Enkripsi Sesi Medis Aktif"
+    }
+  };
+  return localMemoryDb;
+}
+
+function saveLocalJson() {
+  try {
+    fs.writeFileSync(LOCAL_JSON_PATH, JSON.stringify(localMemoryDb, null, 2), 'utf-8');
+  } catch (err) {
+    console.error("Error writing local database file:", err);
+  }
+}
+
 // Helper to run promises with a timeout to withstand potential offline/slow database gateways
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 2500): Promise<T> {
   return Promise.race([
@@ -182,6 +232,9 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 2500): Promise<
 
 // Helper to load/save database
 async function loadDb() {
+  if (!useFirebase || !db) {
+    return loadLocalJson();
+  }
   try {
     // 1. Settings
     let settings = {
@@ -190,37 +243,60 @@ async function loadDb() {
       favicon: "",
       footerText: "© 2026 Admin BPJS Kesehatan • Keamanan Otentikasi Klinik Berlapis • Enkripsi Sesi Medis Aktif"
     };
-    const settingsDoc = await withTimeout(getDoc(doc(db, "settings", "app-settings")));
+    const settingsDoc = await withTimeout(getDoc(doc(db, "settings", "app-settings")), 2000);
     if (settingsDoc.exists()) {
       settings = { ...settings, ...settingsDoc.data() };
-    } else {
-      await setDoc(doc(db, "settings", "app-settings"), settings);
     }
 
     // 2. Peserta
-    const pesertaSnap = await withTimeout(getDocs(collection(db, "peserta")));
+    const pesertaSnap = await withTimeout(getDocs(collection(db, "peserta")), 2000);
     let pesertaList: any[] = [];
-    pesertaSnap.forEach(d => pesertaList.push(d.data()));
+    pesertaSnap.forEach(d => {
+      const p = d.data();
+      if (p && p.id) {
+        pesertaList.push(p);
+      }
+    });
 
     // 3. HealthLogs
-    const logsSnap = await withTimeout(getDocs(collection(db, "logs")));
+    const logsSnap = await withTimeout(getDocs(collection(db, "logs")), 2000);
     let logsList: any[] = [];
-    logsSnap.forEach(d => logsList.push(d.data()));
+    logsSnap.forEach(d => {
+      const l = d.data();
+      if (l && l.id) {
+        logsList.push(l);
+      }
+    });
 
     // 4. Jadwal
-    const jadwalSnap = await withTimeout(getDocs(collection(db, "jadwal")));
+    const jadwalSnap = await withTimeout(getDocs(collection(db, "jadwal")), 2000);
     let jadwalList: any[] = [];
-    jadwalSnap.forEach(d => jadwalList.push(d.data()));
+    jadwalSnap.forEach(d => {
+      const j = d.data();
+      if (j && j.id) {
+        jadwalList.push(j);
+      }
+    });
 
     // 5. Notifications
-    const notificationSnap = await withTimeout(getDocs(collection(db, "notifications")));
+    const notificationSnap = await withTimeout(getDocs(collection(db, "notifications")), 2000);
     let notificationList: any[] = [];
-    notificationSnap.forEach(d => notificationList.push(d.data()));
+    notificationSnap.forEach(d => {
+      const n = d.data();
+      if (n && n.id) {
+        notificationList.push(n);
+      }
+    });
 
     // 6. Videos
-    const videosSnap = await withTimeout(getDocs(collection(db, "videos")));
+    const videosSnap = await withTimeout(getDocs(collection(db, "videos")), 2000);
     let videosList: any[] = [];
-    videosSnap.forEach(d => videosList.push(d.data()));
+    videosSnap.forEach(d => {
+      const v = d.data();
+      if (v && v.id) {
+        videosList.push(v);
+      }
+    });
 
     // Seeding if collections empty
     if (pesertaList.length === 0) {
@@ -273,7 +349,8 @@ async function loadDb() {
     notificationList.sort((a, b) => b.id.localeCompare(a.id));
     videosList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    return {
+    // Update local cache
+    localMemoryDb = {
       peserta: pesertaList,
       logs: logsList,
       jadwal: jadwalList,
@@ -281,29 +358,39 @@ async function loadDb() {
       videos: videosList,
       settings
     };
+    saveLocalJson();
+
+    return localMemoryDb;
   } catch (error) {
-    console.error("Error loading Firestore database:", error);
-    return {
-      peserta: initialPeserta,
-      logs: initialLogs,
-      jadwal: initialJadwal,
-      notifications: initialNotifications,
-      videos: [],
-      settings: {
-        logo: "",
-        logoFooter: "",
-        favicon: "",
-        footerText: "© 2026 Admin BPJS Kesehatan • Keamanan Otentikasi Klinik Berlapis • Enkripsi Sesi Medis Aktif"
-      }
-    };
+    console.warn("Koneksi database Prolanis Firebase gagal atau melampaui batas waktu. Berpindah menggunakan basis data lokal data-prolanis.json. Detail:", error);
+    return loadLocalJson();
   }
 }
 
 async function writeFirestoreDoc(collectionName: string, id: string, docData: any) {
-  try {
-    await setDoc(doc(db, collectionName, id), docData);
-  } catch (err) {
-    console.error(`Error writing to ${collectionName}/${id}:`, err);
+  // Update local database first
+  const memoryDb = loadLocalJson();
+  if (collectionName === "settings") {
+    memoryDb.settings = { ...memoryDb.settings, ...docData };
+  } else {
+    const list = memoryDb[collectionName] || [];
+    const idx = list.findIndex((item: any) => item.id === id);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...docData };
+    } else {
+      list.push(docData);
+    }
+    memoryDb[collectionName] = list;
+  }
+  saveLocalJson();
+
+  // Optionally replicate to Firestore if enabled
+  if (useFirebase && db) {
+    try {
+      await withTimeout(setDoc(doc(db, collectionName, id), docData), 2000);
+    } catch (err) {
+      console.error(`Firebase replication error for ${collectionName}/${id}:`, err);
+    }
   }
 }
 
@@ -519,13 +606,20 @@ async function startServer() {
       return res.status(400).json({ error: "ID catatan diperlukan." });
     }
 
-    try {
-      await deleteDoc(doc(db, "logs", id));
-      res.json({ message: "Catatan kesehatan berhasil dihapus!" });
-    } catch (err: any) {
-      console.error("Delete log error:", err);
-      res.status(500).json({ error: "Gagal menghapus catatan kesehatan dari Firestore." });
+    // Update local database first
+    const data = loadLocalJson();
+    data.logs = data.logs.filter((l: any) => l.id !== id);
+    saveLocalJson();
+
+    if (useFirebase && db) {
+      try {
+        await withTimeout(deleteDoc(doc(db, "logs", id)), 2000);
+      } catch (err: any) {
+        console.error("Delete log error from Firestore:", err);
+      }
     }
+
+    res.json({ message: "Catatan kesehatan berhasil dihapus!" });
   });
 
   // API Routes - Add Educational Video (Admin)
@@ -543,13 +637,20 @@ async function startServer() {
       createdAt: new Date().toISOString()
     };
 
-    try {
-      await setDoc(doc(db, "videos", newVideo.id), newVideo);
-      res.json({ message: "Video edukasi berhasil ditambahkan!", video: newVideo });
-    } catch (err: any) {
-      console.error("Add video error:", err);
-      res.status(500).json({ error: "Gagal menyimpan video edukasi ke Firestore." });
+    // Update local database first
+    const data = loadLocalJson();
+    data.videos.unshift(newVideo);
+    saveLocalJson();
+
+    if (useFirebase && db) {
+      try {
+        await withTimeout(setDoc(doc(db, "videos", newVideo.id), newVideo), 2000);
+      } catch (err: any) {
+        console.error("Add video error to Firestore:", err);
+      }
     }
+
+    res.json({ message: "Video edukasi berhasil ditambahkan!", video: newVideo });
   });
 
   // API Routes - Delete Educational Video (Admin)
@@ -559,13 +660,20 @@ async function startServer() {
       return res.status(400).json({ error: "ID video diperlukan." });
     }
 
-    try {
-      await deleteDoc(doc(db, "videos", id));
-      res.json({ message: "Video edukasi berhasil dihapus!" });
-    } catch (err: any) {
-      console.error("Delete video error:", err);
-      res.status(500).json({ error: "Gagal menghapus video edukasi dari Firestore." });
+    // Update local database first
+    const data = loadLocalJson();
+    data.videos = data.videos.filter((v: any) => v.id !== id);
+    saveLocalJson();
+
+    if (useFirebase && db) {
+      try {
+        await withTimeout(deleteDoc(doc(db, "videos", id)), 2000);
+      } catch (err: any) {
+        console.error("Delete video error from Firestore:", err);
+      }
     }
+
+    res.json({ message: "Video edukasi berhasil dihapus!" });
   });
 
   // API Routes - Create Schedule Reminder (Admin)

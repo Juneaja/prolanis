@@ -50,6 +50,111 @@ export default function App() {
   }, [appSettings?.favicon]);
 
   
+  // LocalStorage Robust Handlers for Static Deployments (GitHub / Vercel SPA)
+  const LOCAL_STORAGE_KEY = 'prolanis_fallback_db';
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+
+  const localSeedData = {
+    peserta: [
+      {
+        id: "peserta-budi",
+        nama: "Pak Budi Santoso",
+        noBpjs: "0001249386291",
+        umur: 64,
+        kontak: "081234567890",
+        diagnosis: "Keduanya",
+        createdAt: "2026-03-01T08:00:00.000Z"
+      },
+      {
+        id: "peserta-siti",
+        nama: "Ibu Siti Rahma",
+        noBpjs: "0002135489004",
+        umur: 58,
+        kontak: "082345678901",
+        diagnosis: "Diabetes Mellitus",
+        createdAt: "2026-03-15T09:30:00.000Z"
+      },
+      {
+        id: "peserta-joko",
+        nama: "Pak Joko Widodo",
+        noBpjs: "0003429815038",
+        umur: 69,
+        kontak: "083456789012",
+        diagnosis: "Hipertensi",
+        createdAt: "2026-04-02T10:00:00.000Z"
+      }
+    ],
+    logs: [
+      { id: "log-b1", pesertaId: "peserta-budi", tanggal: "2026-04-05", gulaDarah: 145, sistolik: 135, diastolik: 85, catatan: "Setelah makan kolak", statusGulaDarah: "Normal", statusTekananDarah: "Prehipertensi", createdAt: "2026-04-05T08:00:00.000Z" },
+      { id: "log-b2", pesertaId: "peserta-budi", tanggal: "2026-04-12", gulaDarah: 168, sistolik: 142, diastolik: 90, catatan: "Tubuh agak lemas setelah sahur", statusGulaDarah: "Tinggi", statusTekananDarah: "Hipertensi", createdAt: "2026-04-12T08:00:00.000Z" },
+      { id: "log-b3", pesertaId: "peserta-budi", tanggal: "2026-04-19", gulaDarah: 130, sistolik: 130, diastolik: 80, catatan: "Rutin minum Metformin", statusGulaDarah: "Normal", statusTekananDarah: "Normal", createdAt: "2026-04-19T08:00:00.000Z" },
+      { id: "log-s1", pesertaId: "peserta-siti", tanggal: "2026-05-01", gulaDarah: 210, sistolik: 120, diastolik: 80, catatan: "Kebanyakan makan karbohidrat", statusGulaDarah: "Tinggi", statusTekananDarah: "Normal", createdAt: "2026-05-01T09:00:00.000Z" }
+    ],
+    jadwal: [
+      {
+        id: "jadwal-1",
+        pesertaId: "peserta-budi",
+        pesertaNama: "Pak Budi Santoso",
+        tipe: "Pemeriksaan Rutin",
+        tanggal: "2026-06-03",
+        pukul: "08:30",
+        lokasi: "Puskesmas Kebon Jeruk",
+        status: "Akan Datang",
+        catatan: "Kontrol gula darah puasa & tekanan darah.",
+        createdAt: "2026-05-28T09:00:00.000Z"
+      }
+    ],
+    notifications: [
+      {
+        id: "notif-1",
+        pesertaId: "peserta-budi",
+        judul: "Jadwal Kontrol Mendatang",
+        pesan: "Mengingatkan kontrol rutin Pemeriksaan Rutin yang akan dijadwalkan pada 2026-06-03 pukul 08:30 di Puskesmas Kebon Jeruk.",
+        tanggal: "2026-05-29",
+        dibaca: false,
+        tipe: "info"
+      }
+    ],
+    videos: [
+      {
+        id: "video-1",
+        judul: "Mengenal Prolanis BPJS Kesehatan",
+        url: "https://www.youtube.com/watch?v=RInYsc-G7zU",
+        deskripsi: "Edukasi mengenai apa itu Program Pengelolaan Penyakit Kronis (PROLANIS) dan manfaatnya bagi kesehatan lansia.",
+        createdAt: "2026-05-28T09:00:00.000Z"
+      }
+    ],
+    settings: {
+      logo: "",
+      logoFooter: "",
+      favicon: "",
+      footerText: "© 2026 Admin BPJS Kesehatan • Keamanan Otentikasi Klinik Berlapis • Enkripsi Sesi Medis Aktif"
+    }
+  };
+
+  const getLocalData = () => {
+    const dataStr = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (dataStr) {
+      try {
+        return JSON.parse(dataStr);
+      } catch (e) {
+        // Ignore JSON error
+      }
+    }
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localSeedData));
+    return localSeedData;
+  };
+
+  const saveLocalData = (data: any) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  };
+
+  const syncToLocalStorage = (updateFn: (db: any) => any) => {
+    const data = getLocalData();
+    updateFn(data);
+    saveLocalData(data);
+  };
+
   // App Loading & Readiness states
   const [isLoading, setIsLoading] = useState(true);
   const [backendError, setBackendError] = useState('');
@@ -81,9 +186,25 @@ export default function App() {
         setActivePesertaId(db.peserta[0].id);
       }
       setBackendError('');
+      setIsOfflineMode(false);
     } catch (err: any) {
-      console.error("Fetch Data Error:", err);
-      setBackendError(err.message || 'Koneksi API terputus.');
+      console.warn("Koneksi API database utama terputus, beralih penuh ke instansi Mode Mandiri lokal. Detail:", err);
+      // Seamlessly fallback
+      const localDb = getLocalData();
+      setPeserta(localDb.peserta || []);
+      setLogs(localDb.logs || []);
+      setJadwal(localDb.jadwal || []);
+      setNotifications(localDb.notifications || []);
+      setVideos(localDb.videos || []);
+      if (localDb.settings) {
+        setAppSettings(localDb.settings);
+      }
+      
+      if (localDb.peserta && localDb.peserta.length > 0 && !activePesertaId) {
+        setActivePesertaId(localDb.peserta[0].id);
+      }
+      setBackendError('');
+      setIsOfflineMode(true);
     } finally {
       setIsLoading(false);
     }
@@ -91,18 +212,27 @@ export default function App() {
 
   // Post updated settings to server configuration API (Admin)
   const updateSettings = async (newSettings: AppSettings) => {
-    const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSettings)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal menyimpan konfigurasi.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSettings)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          setAppSettings(result.settings || newSettings);
+          syncToLocalStorage(db => { db.settings = result.settings || newSettings; });
+          return result;
+        }
+      } catch (err) {
+        console.warn("Replikasi setelan ke server gagal, menyimpan ke lokal saja:", err);
+      }
     }
-    // Update local state directly
-    setAppSettings(result.settings || newSettings);
-    return result;
+
+    syncToLocalStorage(db => { db.settings = newSettings; });
+    setAppSettings(newSettings);
+    return { settings: newSettings };
   };
 
 
@@ -129,163 +259,517 @@ export default function App() {
 
   // Post new manually added participant (Admin API)
   const addNewPeserta = async (newP: any) => {
-    const res = await fetch('/api/peserta', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newP)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Server error.');
+    if (!newP.nama || !newP.noBpjs || !newP.umur || !newP.diagnosis) {
+      throw new Error("Kolom nama, nomor BPJS, usia, dan diagnosis wajib diisi!");
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/peserta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newP)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Server error.');
+      } catch (err: any) {
+        if (err.message && (err.message.includes('BPJS') || err.message.includes('terdaftar') || err.message.includes('sudah'))) {
+          throw err;
+        }
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
+    }
+
+    // Offline registration
+    const data = getLocalData();
+    const duplicate = data.peserta.find((p: any) => p.noBpjs === newP.noBpjs);
+    if (duplicate) {
+      throw new Error("Peserta dengan nomor BPJS ini sudah terdaftar.");
+    }
+
+    const newParticipant = {
+      id: `peserta-${Date.now()}`,
+      nama: newP.nama,
+      noBpjs: newP.noBpjs,
+      umur: Number(newP.umur),
+      kontak: newP.kontak || "-",
+      diagnosis: newP.diagnosis,
+      createdAt: new Date().toISOString()
+    };
+
+    const welcomeJadwal = {
+      id: `jadwal-${Date.now()}`,
+      pesertaId: newParticipant.id,
+      pesertaNama: newParticipant.nama,
+      tipe: "Pemeriksaan Rutin",
+      tanggal: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      pukul: "08:00",
+      lokasi: "Poli Lansia / Prolanis Puskesmas",
+      status: "Akan Datang",
+      catatan: "Kontrol pemeriksaan perdana setelah pendaftaran manual oleh Admin.",
+      createdAt: new Date().toISOString()
+    };
+
+    const welcomeNotification = {
+      id: `notif-${Date.now()}`,
+      pesertaId: newParticipant.id,
+      judul: "Selamat Datang di Portal Prolanis",
+      pesan: `Akun Prolanis BPJS Anda telah terbuat secara manual oleh Admin. Jadwal Pemeriksaan Rutin pertama Anda jatuh pada tanggal ${welcomeJadwal.tanggal} pukul 08:00 WIB.`,
+      tanggal: new Date().toISOString().split('T')[0],
+      dibaca: false,
+      tipe: "success"
+    };
+
+    data.peserta.unshift(newParticipant);
+    data.jadwal.unshift(welcomeJadwal);
+    data.notifications.unshift(welcomeNotification);
+    saveLocalData(data);
+
+    // Refresh states
+    setPeserta(data.peserta);
+    setJadwal(data.jadwal);
+    setNotifications(data.notifications);
+    if (!activePesertaId) setActivePesertaId(newParticipant.id);
+
+    return { message: "Peserta berhasil ditambahkan secara lokal!", peserta: newParticipant };
   };
 
   // Update existing participant details (Admin API)
   const updatePeserta = async (updatedP: any) => {
-    const res = await fetch('/api/peserta', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedP)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Server error.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/peserta', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedP)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Server error.');
+      } catch (err: any) {
+        if (err.message && (err.message.includes('BPJS') || err.message.includes('digunakan') || err.message.includes('lain'))) {
+          throw err;
+        }
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    const idx = data.peserta.findIndex((p: any) => p.id === updatedP.id);
+    if (idx === -1) {
+      throw new Error("Pasien tidak ditemukan!");
+    }
+
+    const duplicate = data.peserta.find((p: any) => p.noBpjs === updatedP.noBpjs && p.id !== updatedP.id);
+    if (duplicate) {
+      throw new Error("Nomor BPJS ini sudah digunakan oleh pasien lain.");
+    }
+
+    data.peserta[idx] = {
+      ...data.peserta[idx],
+      nama: updatedP.nama,
+      noBpjs: updatedP.noBpjs,
+      umur: Number(updatedP.umur),
+      kontak: updatedP.kontak || "-",
+      diagnosis: updatedP.diagnosis
+    };
+
+    // Sync name to schedules
+    data.jadwal = data.jadwal.map((j: any) => {
+      if (j.pesertaId === updatedP.id) {
+        return { ...j, pesertaNama: updatedP.nama };
+      }
+      return j;
+    });
+
+    saveLocalData(data);
+
+    setPeserta(data.peserta);
+    setJadwal(data.jadwal);
+    return { message: "Data pasien berhasil diperbarui!" };
   };
 
   // Post brand new scheduled control check (Admin API)
   const addNewJadwal = async (newJ: any) => {
-    const res = await fetch('/api/jadwal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newJ)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Server error.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/jadwal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newJ)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Server error.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    const p = data.peserta.find((item: any) => item.id === newJ.pesertaId);
+    if (!p) {
+      throw new Error("Peserta tidak ditemukan!");
+    }
+
+    const newJadwal = {
+      id: `jadwal-${Date.now()}`,
+      pesertaId: newJ.pesertaId,
+      pesertaNama: p.nama,
+      tipe: newJ.tipe,
+      tanggal: newJ.tanggal,
+      pukul: newJ.pukul,
+      lokasi: newJ.lokasi,
+      status: "Akan Datang",
+      catatan: newJ.catatan || "",
+      createdAt: new Date().toISOString()
+    };
+
+    const schedNotif = {
+      id: `notif-${Date.now()}`,
+      pesertaId: newJ.pesertaId,
+      judul: `Jadwal Pengingat: Kontrol ${newJ.tipe}`,
+      pesan: `Hai ${p.nama}, Anda memiliki jadwal kontrol (${newJ.tipe}) yang baru ditambahkan oleh Admin/Dokter untuk tanggal ${newJ.tanggal} pukul ${newJ.pukul} di ${newJ.lokasi}. Catatan dokter: ${newJ.catatan || "-"}`,
+      tanggal: new Date().toISOString().split('T')[0],
+      dibaca: false,
+      tipe: "info"
+    };
+
+    data.jadwal.unshift(newJadwal);
+    data.notifications.unshift(schedNotif);
+    saveLocalData(data);
+
+    // Sync to local component state arrays
+    setJadwal(data.jadwal);
+    setNotifications(data.notifications);
+
+    return { message: "Jadwal kontrol dan pengingat otomatis sukses ditambahkan!", jadwal: newJadwal };
   };
 
   // Post user self check log (Participant API)
   const addNewLog = async (newLogData: any) => {
-    const res = await fetch('/api/logs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newLogData)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal menyimpan log.');
+    const assessGulaDarah = (gula: number) => {
+      if (gula < 80) return 'Rendah';
+      if (gula > 140) return 'Tinggi';
+      return 'Normal';
+    };
+
+    const assessTekananDarah = (sistolik: number, diastolik: number) => {
+      if (sistolik >= 140 || diastolik >= 90) return 'Hipertensi';
+      if ((sistolik >= 120 && sistolik < 140) || (diastolik >= 80 && diastolik < 90)) return 'Prehipertensi';
+      return 'Normal';
+    };
+
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newLogData)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Gagal menyimpan log.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    const subGula = assessGulaDarah(Number(newLogData.gulaDarah));
+    const subTekanan = assessTekananDarah(Number(newLogData.sistolik), Number(newLogData.diastolik));
+
+    const newLog = {
+      id: `log-${Date.now()}`,
+      pesertaId: newLogData.pesertaId,
+      tanggal: newLogData.tanggal,
+      gulaDarah: Number(newLogData.gulaDarah),
+      sistolik: Number(newLogData.sistolik),
+      diastolik: Number(newLogData.diastolik),
+      catatan: newLogData.catatan || "",
+      statusGulaDarah: subGula,
+      statusTekananDarah: subTekanan,
+      isMandiri: !!newLogData.isMandiri,
+      createdAt: new Date().toISOString()
+    };
+
+    data.logs.unshift(newLog);
+
+    if (subGula === 'Tinggi' || subTekanan === 'Hipertensi') {
+      const warningNotif = {
+        id: `notif-${Date.now()}`,
+        pesertaId: newLogData.pesertaId,
+        judul: "Peringatan Hasil Pemeriksaan",
+        pesan: `Hasil pencatatan Anda pada ${newLogData.tanggal} menunjukan angka ${subGula === 'Tinggi' ? 'Gula Darah Tinggi (' + newLogData.gulaDarah + ' mg/dL)' : ''}${subGula === 'Tinggi' && subTekanan === 'Hipertensi' ? ' dan ' : ''}${subTekanan === 'Hipertensi' ? 'Hipertensi (' + newLogData.sistolik + '/' + newLogData.diastolik + ' mmHg)' : ''}. Mohon kurangi konsumsi pemicu dan pastikan meminum obat rutin Anda.`,
+        tanggal: new Date().toISOString().split('T')[0],
+        dibaca: false,
+        tipe: "alert"
+      };
+      data.notifications.unshift(warningNotif);
+    }
+
+    saveLocalData(data);
+    setLogs(data.logs);
+    setNotifications(data.notifications);
+
+    return { message: "Catatan kesehatan harian berhasil diunggah!", log: newLog };
   };
 
   // Update existing health check log (Admin/Participant API)
   const updateLog = async (updatedLogData: any) => {
-    const res = await fetch('/api/logs', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedLogData)
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal memperbarui log.');
+    const assessGulaDarah = (gula: number) => {
+      if (gula < 80) return 'Rendah';
+      if (gula > 140) return 'Tinggi';
+      return 'Normal';
+    };
+
+    const assessTekananDarah = (sistolik: number, diastolik: number) => {
+      if (sistolik >= 140 || diastolik >= 90) return 'Hipertensi';
+      if ((sistolik >= 120 && sistolik < 140) || (diastolik >= 80 && diastolik < 90)) return 'Prehipertensi';
+      return 'Normal';
+    };
+
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/logs', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedLogData)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Gagal memperbarui log.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    const idx = data.logs.findIndex((l: any) => l.id === updatedLogData.id);
+    if (idx === -1) {
+      throw new Error("Catatan kesehatan tidak ditemukan!");
+    }
+
+    const subGula = assessGulaDarah(Number(updatedLogData.gulaDarah));
+    const subTekanan = assessTekananDarah(Number(updatedLogData.sistolik), Number(updatedLogData.diastolik));
+
+    data.logs[idx] = {
+      ...data.logs[idx],
+      tanggal: updatedLogData.tanggal,
+      gulaDarah: Number(updatedLogData.gulaDarah),
+      sistolik: Number(updatedLogData.sistolik),
+      diastolik: Number(updatedLogData.diastolik),
+      catatan: updatedLogData.catatan || "",
+      statusGulaDarah: subGula,
+      statusTekananDarah: subTekanan
+    };
+
+    saveLocalData(data);
+    setLogs(data.logs);
+
+    return { message: "Catatan pemeriksaan berhasil diperbarui!", log: data.logs[idx] };
   };
 
   // Delete existing health check log (Admin/Participant API)
   const deleteLog = async (id: string) => {
-    const res = await fetch(`/api/logs/${id}`, {
-      method: 'DELETE'
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal menghapus log.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch(`/api/logs/${id}`, {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Gagal menghapus log.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    // Refresh database
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    data.logs = data.logs.filter((l: any) => l.id !== id);
+    saveLocalData(data);
+    setLogs(data.logs);
+
+    return { message: "Catatan kesehatan berhasil dihapus!" };
   };
 
   // Add educational video (Admin API)
   const addNewVideo = async (judul: string, url: string, deskripsi: string) => {
-    const res = await fetch('/api/videos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ judul, url, deskripsi })
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal menambahkan video edukasi.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/videos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ judul, url, deskripsi })
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Gagal menambahkan video edukasi.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    const newVideo = {
+      id: `video-${Date.now()}`,
+      judul,
+      url,
+      deskripsi: deskripsi || "",
+      createdAt: new Date().toISOString()
+    };
+    data.videos.unshift(newVideo);
+    saveLocalData(data);
+    setVideos(data.videos);
+
+    return { message: "Video edukasi berhasil ditambahkan!", video: newVideo };
   };
 
   // Delete educational video (Admin API)
   const deleteVideo = async (id: string) => {
-    const res = await fetch(`/api/videos/${id}`, {
-      method: 'DELETE'
-    });
-    const result = await res.json();
-    if (!res.ok) {
-      throw new Error(result.error || 'Gagal menghapus video edukasi.');
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch(`/api/videos/${id}`, {
+          method: 'DELETE'
+        });
+        const result = await res.json();
+        if (res.ok) {
+          await fetchAllData();
+          return result;
+        }
+        throw new Error(result.error || 'Gagal menghapus video edukasi.');
+      } catch (err: any) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
+      }
     }
-    await fetchAllData();
-    return result;
+
+    const data = getLocalData();
+    data.videos = data.videos.filter((v: any) => v.id !== id);
+    saveLocalData(data);
+    setVideos(data.videos);
+
+    return { message: "Video edukasi berhasil dihapus!" };
   };
 
   // Update schedule status (Admin/Doctor action)
   const updateJadwalStatus = async (id: string, status: string) => {
-    try {
-      const res = await fetch('/api/jadwal/status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status })
-      });
-      if (res.ok) {
-        await fetchAllData();
+    if (!isOfflineMode) {
+      try {
+        const res = await fetch('/api/jadwal/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status })
+        });
+        if (res.ok) {
+          await fetchAllData();
+          return;
+        }
+      } catch (err) {
+        console.warn("Gagal menghubungi server, menggunakan penyimpanan lokal:", err);
       }
-    } catch (err) {
-      console.error(err);
     }
+
+    const data = getLocalData();
+    data.jadwal = data.jadwal.map((j: any) => j.id === id ? { ...j, status } : j);
+    saveLocalData(data);
+    setJadwal(data.jadwal);
   };
 
   // Mark specific notification as read (Participant action)
   const markNotificationRead = async (id: string) => {
-    try {
-      const res = await fetch('/api/notifications/dibaca', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      if (res.ok) {
-        // Minor state optimizations to reflect instantly
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, dibaca: true } : n));
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, dibaca: true } : n));
+    
+    if (!isOfflineMode) {
+      try {
+        await fetch('/api/notifications/dibaca', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        return;
+      } catch (err) {
+        console.warn("Gagal menghubungi server, menyinkronkan status notifikasi dibaca secara lokal saja:", err);
       }
-    } catch (err) {
-      console.error(err);
     }
+
+    const data = getLocalData();
+    data.notifications = data.notifications.map((n: any) => n.id === id ? { ...n, dibaca: true } : n);
+    saveLocalData(data);
   };
 
   // Explicitly run automations via admin action
   const triggerAutomations = async () => {
-    await fetch('/api/automations/reminders', { method: 'POST' });
-    await fetchAllData();
+    if (!isOfflineMode) {
+      try {
+        await fetch('/api/automations/reminders', { method: 'POST' });
+        await fetchAllData();
+        return;
+      } catch (err) {
+        console.warn("Gagal menghubungkan automasi ke server:", err);
+      }
+    }
+
+    const data = getLocalData();
+    const todayStr = new Date().toISOString().split('T')[0];
+    let createdCount = 0;
+
+    for (const j of data.jadwal) {
+      if (j.status === 'Akan Datang') {
+        const eventDate = new Date(j.tanggal);
+        const todayDate = new Date(todayStr);
+        const differenceInTime = eventDate.getTime() - todayDate.getTime();
+        const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+        if (differenceInDays === 1) {
+          const duplicateCheck = data.notifications.find((n: any) => 
+            n.pesertaId === j.pesertaId && 
+            n.judul.includes("H-1") && 
+            n.pesan.includes(j.tanggal)
+          );
+
+          if (!duplicateCheck) {
+            const warningNotif = {
+              id: `notif-${Date.now()}-${j.id}`,
+              pesertaId: j.pesertaId,
+              judul: `H-1 Pengingat Kontrol ${j.tipe}`,
+              pesan: `Mengingatkan kembali bahwa besok Anda memiliki jadwal (${j.tipe}) di ${j.lokasi} pukul ${j.pukul}. Mohon hadir tepat waktu dengan membawa berkas kontrol BPJS.`,
+              tanggal: todayStr,
+              dibaca: false,
+              tipe: "warning"
+            };
+            data.notifications.unshift(warningNotif);
+            createdCount++;
+          }
+        }
+      }
+    }
+
+    if (createdCount > 0) {
+      saveLocalData(data);
+      setNotifications(data.notifications);
+    }
   };
 
   if (isLoading) {
@@ -400,6 +884,9 @@ export default function App() {
                   <h1 className="text-base font-extrabold tracking-tight flex items-center gap-2">
                     <span className="font-display font-black text-white tracking-widest text-lg">PROLANIS</span>
                     <span className="bg-gradient-to-r from-teal-400 to-emerald-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-sm">BPJS</span>
+                    {isOfflineMode && (
+                      <span className="bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-sm">Mode Mandiri (Lokal)</span>
+                    )}
                   </h1>
                   <p className="text-[10px] text-teal-300 font-bold leading-none tracking-wider mt-0.5">SISTEM INTEGRASI KESEHATAN PREVENTIF LANSIA</p>
                 </div>
