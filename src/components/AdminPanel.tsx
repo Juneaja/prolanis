@@ -839,54 +839,7 @@ export function AdminPanel({
             <div className="p-1.5 bg-violet-50 text-violet-600 rounded-xl">
               <Sparkles className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="text-md font-bold text-gray-800">Evaluasi Progress & Rekomendasi Klinik AI</h4>
-              <p className="text-xs text-gray-400">Teknologi Gemini Generatif mengevaluasi kestabilan penyakit & nutrisi pasien</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pilih Anggota Prolanis</label>
-              <select
-                value={reportPesertaId}
-                onChange={(e) => setReportPesertaId(e.target.value)}
-                className="w-full p-2 text-xs bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value="">-- Pilih Anggota --</option>
-                {peserta.map(p => (
-                  <option key={p.id} value={p.id}>{p.nama} ({p.diagnosis})</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Periode Evaluasi</label>
-              <select
-                value={reportBulan}
-                onChange={(e) => setReportBulan(e.target.value)}
-                className="w-full p-2 text-xs bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
-              >
-                <option value="2026-05">Mei 2026</option>
-                <option value="2026-04">April 2026</option>
-              </select>
-            </div>
-          </div>
-
-          <button
-            onClick={handleGenerateReport}
-            disabled={isGeneratingReport || !reportPesertaId}
-            id="buat-laporan-ai-btn"
-            className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-xs rounded-2xl hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-55"
-          >
-            {isGeneratingReport ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            Luncurkan Diagnosis & Saran Nutrisi AI
-          </button>
-
+            
           {reportError && (
             <div className="p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex items-start gap-2 animate-fadeIn">
               <AlertTriangle className="w-4 h-4 mt-0.5" />
