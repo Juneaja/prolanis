@@ -54,6 +54,13 @@ export function AdminLogin({ onLoginSuccess, onCancel }: AdminLoginProps) {
           </h3>
           <p className="text-xs text-gray-500 font-medium">Masuk untuk memantau rekam medis & notifikasi Prolanis</p>
         </div>
+
+        {/* Secure Info Alert Box */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-100/60 p-4 rounded-2xl text-[11px] text-amber-900 space-y-1.5 shadow-sm">
+          <div className="flex items-center gap-1.5 font-bold text-amber-800">
+            <span className="p-1 bg-amber-100 text-amber-800 rounded-lg text-[9px] font-mono">🔑 AKUN UJI COBA</span>
+            <span className="text-amber-700">TRIAL CREDENTIALS:</span>
+          </div>
           <p className="leading-relaxed text-gray-600 font-medium">
             Gunakan kredensial resmi BPJS berikut untuk meluncurkan dashboard medis: <br />
             <span className="inline-block mt-1">

@@ -410,7 +410,8 @@ function assessTekananDarah(sistolik: number, diastolik: number): 'Normal' | 'Pr
 
 async function startServer() {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: "20mb" }));
+  app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
   // API Routes - Get all baseline data
   app.get('/api/data', async (req, res) => {
@@ -420,7 +421,7 @@ async function startServer() {
 
   // API Routes - Create Manual Participant (Admin)
   app.post('/api/peserta', async (req, res) => {
-    const { nama, noBpjs, umur, kontak, diagnosis } = req.body;
+    const { nama, noBpjs, umur, kontak, diagnosis, foto } = req.body;
     if (!nama || !noBpjs || !umur || !diagnosis) {
       return res.status(400).json({ error: "Kolom nama, BPJS, usia, dan diagnosis wajib diisi!" });
     }
@@ -440,6 +441,7 @@ async function startServer() {
       umur: Number(umur),
       kontak: kontak || "-",
       diagnosis,
+      foto: foto || "",
       createdAt: new Date().toISOString()
     };
 
@@ -479,7 +481,7 @@ async function startServer() {
 
   // API Routes - Update Participant (Admin)
   app.put('/api/peserta', async (req, res) => {
-    const { id, nama, noBpjs, umur, kontak, diagnosis } = req.body;
+    const { id, nama, noBpjs, umur, kontak, diagnosis, foto } = req.body;
     if (!id || !nama || !noBpjs || !umur || !diagnosis) {
       return res.status(400).json({ error: "Kolom ID, nama, BPJS, usia, dan diagnosis wajib diisi!" });
     }
@@ -504,7 +506,8 @@ async function startServer() {
       noBpjs,
       umur: Number(umur),
       kontak: kontak || "-",
-      diagnosis
+      diagnosis,
+      foto: foto !== undefined ? foto : (data.peserta[idx].foto || "")
     };
 
     await writeFirestoreDoc("peserta", updatedPeserta.id, updatedPeserta);
