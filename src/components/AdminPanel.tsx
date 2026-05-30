@@ -494,12 +494,16 @@ export function AdminPanel({
                   <div 
                     key={p.id}
                     onClick={() => setSelectedPasienId(isSelected ? null : p.id)}
-                    className={`p-4 flex items-center justify-between text-left cursor-pointer transition-all ${isSelected ? 'bg-teal-50/50 border-l-4 border-l-teal-500' : 'hover:bg-gray-50'}`}
+                    className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between text-left cursor-pointer transition-all gap-3 ${
+                      isSelected 
+                        ? 'bg-teal-50/50 border-l-4 border-l-teal-500 shadow-sm' 
+                        : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    }`}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-800 text-sm">{p.nama}</span>
-                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-lg ${
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-gray-800 text-sm leading-tight">{p.nama}</span>
+                        <span className={`px-2 py-0.5 text-[9px] font-bold rounded-lg whitespace-nowrap ${
                           p.diagnosis === 'Diabetes Mellitus' ? 'bg-red-50 text-red-600' :
                           p.diagnosis === 'Hipertensi' ? 'bg-emerald-50 text-emerald-600' :
                           'bg-indigo-50 text-indigo-600'
@@ -507,22 +511,22 @@ export function AdminPanel({
                           {p.diagnosis}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 font-mono">No. BPJS: {p.noBpjs} • Usia: {p.umur} Thn</p>
+                      <p className="text-xs text-gray-400 font-mono mt-0.5">No. BPJS: {p.noBpjs} • Usia: {p.umur} Thn</p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-dashed border-gray-100 shrink-0">
                       {latestLog ? (
-                        <div className="hidden sm:flex items-center gap-3 text-right">
+                        <div className="flex items-center gap-2.5 text-right font-medium">
                           <div className="space-y-0.5">
-                            <span className="text-[10px] text-gray-400 uppercase tracking-widest block font-bold">Log Terakhir</span>
-                            <div className="flex gap-2">
+                            <span className="text-[9px] text-gray-400 uppercase tracking-widest block font-bold sm:text-right text-left">Log Terakhir</span>
+                            <div className="flex gap-1.5">
                               {p.diagnosis !== 'Hipertensi' && (
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${latestLog.statusGulaDarah === 'Tinggi' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${latestLog.statusGulaDarah === 'Tinggi' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}>
                                   🍬 {latestLog.gulaDarah}
                                 </span>
                               )}
                               {p.diagnosis !== 'Diabetes Mellitus' && (
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md ${latestLog.statusTekananDarah === 'Hipertensi' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${latestLog.statusTekananDarah === 'Hipertensi' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>
                                   ❤️ {latestLog.sistolik}/{latestLog.diastolik}
                                 </span>
                               )}
@@ -530,9 +534,9 @@ export function AdminPanel({
                           </div>
                         </div>
                       ) : (
-                        <span className="hidden sm:inline text-[9px] text-gray-300 font-semibold uppercase">Kosong</span>
+                        <span className="text-[9px] text-gray-300 font-bold uppercase tracking-wider">Belum Ada</span>
                       )}
-                      <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${isSelected ? 'rotate-90 text-teal-600' : ''}`} />
+                      <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isSelected ? 'rotate-90 text-teal-600' : ''}`} />
                     </div>
                   </div>
                 );

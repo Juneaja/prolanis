@@ -215,7 +215,7 @@ export function ParticipantDashboard({
       {/* Elegantly Polished Profil Banner with Active session indicator */}
       <div className="bg-white p-6 rounded-3xl border border-teal-100 shadow-lux flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6">
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="w-14 h-14 bg-gradient-to-tr from-teal-600 to-teal-555 text-white rounded-2xl flex items-center justify-center font-display font-black text-xl border border-teal-200/20 shrink-0 shadow-md">
+          <div className="w-14 h-14 bg-gradient-to-tr from-teal-600 to-emerald-500 text-white rounded-2xl flex items-center justify-center font-display font-black text-xl border border-teal-200/20 shrink-0 shadow-md">
             {currentPeserta.nama.charAt(0)}
           </div>
           <div>
@@ -373,185 +373,377 @@ export function ParticipantDashboard({
                   : '🏡 Anda belum mencatat pemeriksaan mandiri apa pun. Silakan catat di formulir sebelah kanan.'}
               </p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
-                      <th className="py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">GDS (mg/dL)</th>
-                      <th className="py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Tensi (mmHg)</th>
-                      <th className="py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-3">Catatan / Status</th>
-                      {activeTab === 'mandiri' && (
-                        <th className="py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center w-24">Aksi</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 text-xs">
-                    {activeLogs.map((log) => {
-                      const isEditing = editingLogId === log.id;
-                      const isDeletingThis = deletingLogId === log.id;
+              <>
+                {/* Desktop View Table (Visible on sm and up) */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal</th>
+                        <th className="py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">GDS (mg/dL)</th>
+                        <th className="py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Tensi (mmHg)</th>
+                        <th className="py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-3">Catatan / Status</th>
+                        {activeTab === 'mandiri' && (
+                          <th className="py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center w-24">Aksi</th>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 text-xs">
+                      {activeLogs.map((log) => {
+                        const isEditing = editingLogId === log.id;
+                        const isDeletingThis = deletingLogId === log.id;
 
-                      return (
-                        <tr key={log.id} className={`hover:bg-slate-50/50 transition-colors ${isEditing ? 'bg-teal-50/15' : ''}`}>
-                          {/* TANGGAL */}
-                          <td className="py-2.5 font-bold text-gray-600">
-                            {isEditing ? (
+                        return (
+                          <tr key={log.id} className={`hover:bg-slate-50/50 transition-colors ${isEditing ? 'bg-teal-50/15' : ''}`}>
+                            {/* TANGGAL */}
+                            <td className="py-2.5 font-bold text-gray-600">
+                              {isEditing ? (
+                                <input
+                                  type="date"
+                                  value={editTanggal}
+                                  onChange={(e) => setEditTanggal(e.target.value)}
+                                  className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-full"
+                                />
+                              ) : (
+                                new Date(log.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                              )}
+                            </td>
+
+                            {/* GULA DARAH */}
+                            <td className="py-2.5 text-center font-mono">
+                              {isEditing ? (
+                                <input
+                                  type="number"
+                                  value={editGulaDarah}
+                                  onChange={(e) => setEditGulaDarah(e.target.value)}
+                                  className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-16 text-center font-mono font-bold"
+                                />
+                              ) : (
+                                <span className={`px-1.5 py-0.5 rounded font-black ${log.statusGulaDarah === 'Tinggi' ? 'text-red-650 bg-red-50' : 'text-emerald-700 bg-emerald-50'}`}>
+                                  {log.gulaDarah}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* TEKANAN DARAH */}
+                            <td className="py-2.5 text-center font-mono font-bold text-gray-700">
+                              {isEditing ? (
+                                <div className="flex items-center justify-center gap-1">
+                                  <input
+                                    type="number"
+                                    value={editSistolik}
+                                    onChange={(e) => setEditSistolik(e.target.value)}
+                                    className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-11 text-center font-mono font-bold"
+                                    placeholder="Sist"
+                                  />
+                                  <span className="text-gray-400">/</span>
+                                  <input
+                                    type="number"
+                                    value={editDiastolik}
+                                    onChange={(e) => setEditDiastolik(e.target.value)}
+                                    className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-11 text-center font-mono font-bold"
+                                    placeholder="Dias"
+                                  />
+                                </div>
+                              ) : (
+                                <span className={`px-1.5 py-0.5 rounded font-black ${log.statusTekananDarah === 'Hipertensi' ? 'text-red-500 bg-red-50' : 'text-emerald-700 bg-emerald-50'}`}>
+                                  {log.sistolik}/{log.diastolik}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* CATATAN */}
+                            <td className="py-2.5 pl-3 text-gray-500">
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={editCatatan}
+                                  onChange={(e) => setEditCatatan(e.target.value)}
+                                  className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-full"
+                                  placeholder="Edit catatan..."
+                                />
+                              ) : (
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] italic">{log.catatan || '-'}</span>
+                                  <span className="text-[8px] font-extrabold mt-1 tracking-wider uppercase text-teal-605">
+                                    {log.isMandiri ? '🏡 Mandiri' : '🏥 Resmi Dokter'}
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+
+                            {/* AKSI EDIT & DELETE */}
+                            {activeTab === 'mandiri' && (
+                              <td className="py-2.5 text-center">
+                                {isEditing ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveEdit(log.id)}
+                                      disabled={isSavingEdit}
+                                      className="p-1.5 bg-emerald-55 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg transition-all"
+                                      title="Simpan"
+                                    >
+                                      {isSavingEdit ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                      ) : (
+                                        <Check className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleCancelEdit}
+                                      disabled={isSavingEdit}
+                                      className="p-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 rounded-lg transition-all"
+                                      title="Batal"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : isDeletingThis ? (
+                                  <div className="flex flex-col items-center justify-center gap-1">
+                                    <span className="text-[8px] text-red-650 font-black uppercase tracking-wider block">Hapus?</span>
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteLog(log.id)}
+                                        disabled={isDeleting}
+                                        className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded text-[8px] transition-all"
+                                      >
+                                        {isDeleting ? '...' : 'Ya'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setDeletingLogId(null)}
+                                        disabled={isDeleting}
+                                        className="px-1.5 py-0.5 bg-white border border-gray-200 text-gray-500 rounded text-[8px] transition-all"
+                                      >
+                                        Batal
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEdit(log)}
+                                      className="p-1.5 bg-teal-50 hover:bg-teal-100 border border-teal-200/50 text-teal-700 rounded-lg transition-all cursor-pointer"
+                                      title="Ubah Pemeriksaan"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeletingLogId(log.id);
+                                        setEditingLogId(null);
+                                        setTableFeedback({ type: '', message: '' });
+                                      }}
+                                      className="p-1.5 bg-red-50 hover:bg-red-100 border border-red-200/50 text-red-750 rounded-lg transition-all cursor-pointer"
+                                      title="Hapus Pemeriksaan"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            )}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card List (Visible on tiny screen sizes under sm) */}
+                <div className="block sm:hidden space-y-4">
+                  {activeLogs.map((log) => {
+                    const isEditing = editingLogId === log.id;
+                    const isDeletingThis = deletingLogId === log.id;
+
+                    return (
+                      <div 
+                        key={log.id} 
+                        className={`p-4 rounded-2xl border transition-all duration-300 space-y-3.5 ${
+                          isEditing 
+                            ? 'bg-teal-50/10 border-teal-250 shadow-sm' 
+                            : 'bg-slate-50/20 border-slate-100 hover:border-slate-150'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-extrabold text-xs text-slate-700 font-mono">
+                            {new Date(log.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-lg border uppercase ${
+                            log.isMandiri 
+                              ? 'bg-amber-50 border-amber-100 text-amber-700' 
+                              : 'bg-teal-50 border-teal-100 text-teal-700'
+                          }`}>
+                            {log.isMandiri ? '🏡 Mandiri' : '🏥 Klinik'}
+                          </span>
+                        </div>
+
+                        {isEditing ? (
+                          <div className="space-y-3.5 text-left">
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tanggal</label>
                               <input
                                 type="date"
                                 value={editTanggal}
                                 onChange={(e) => setEditTanggal(e.target.value)}
-                                className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-full"
+                                className="w-full p-2 text-xs bg-white border border-gray-250 rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none"
                               />
-                            ) : (
-                              new Date(log.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                            )}
-                          </td>
+                            </div>
 
-                          {/* GULA DARAH */}
-                          <td className="py-2.5 text-center font-mono">
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={editGulaDarah}
-                                onChange={(e) => setEditGulaDarah(e.target.value)}
-                                className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-16 text-center font-mono font-bold"
-                              />
-                            ) : (
-                              <span className={`px-1.5 py-0.5 rounded font-black ${log.statusGulaDarah === 'Tinggi' ? 'text-red-650 bg-red-50' : 'text-emerald-700 bg-emerald-50'}`}>
-                                {log.gulaDarah}
-                              </span>
-                            )}
-                          </td>
-
-                          {/* TEKANAN DARAH */}
-                          <td className="py-2.5 text-center font-mono font-bold text-gray-700">
-                            {isEditing ? (
-                              <div className="flex items-center justify-center gap-1">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">GDS (mg/dL)</label>
                                 <input
                                   type="number"
-                                  value={editSistolik}
-                                  onChange={(e) => setEditSistolik(e.target.value)}
-                                  className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-11 text-center font-mono font-bold"
-                                  placeholder="Sist"
-                                />
-                                <span className="text-gray-400">/</span>
-                                <input
-                                  type="number"
-                                  value={editDiastolik}
-                                  onChange={(e) => setEditDiastolik(e.target.value)}
-                                  className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-11 text-center font-mono font-bold"
-                                  placeholder="Dias"
+                                  value={editGulaDarah}
+                                  onChange={(e) => setEditGulaDarah(e.target.value)}
+                                  className="w-full p-2 text-xs bg-white border border-gray-255 rounded-xl focus:ring-1 focus:ring-teal-500 focus:outline-none font-mono text-center font-bold"
                                 />
                               </div>
-                            ) : (
-                              <span className={`px-1.5 py-0.5 rounded font-black ${log.statusTekananDarah === 'Hipertensi' ? 'text-red-500 bg-red-50' : 'text-emerald-700 bg-emerald-50'}`}>
-                                {log.sistolik}/{log.diastolik}
-                              </span>
-                            )}
-                          </td>
+                              <div>
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Tensi (mmHg)</label>
+                                <div className="flex items-center gap-1 bg-white p-1 border border-gray-255 rounded-xl">
+                                  <input
+                                    type="number"
+                                    value={editSistolik}
+                                    onChange={(e) => setEditSistolik(e.target.value)}
+                                    className="w-full p-1 text-xs text-center focus:outline-none font-mono"
+                                    placeholder="Sist"
+                                  />
+                                  <span className="text-gray-300">/</span>
+                                  <input
+                                    type="number"
+                                    value={editDiastolik}
+                                    onChange={(e) => setEditDiastolik(e.target.value)}
+                                    className="w-full p-1 text-xs text-center focus:outline-none font-mono"
+                                    placeholder="Dias"
+                                  />
+                                </div>
+                              </div>
+                            </div>
 
-                          {/* CATATAN */}
-                          <td className="py-2.5 pl-3 text-gray-500">
-                            {isEditing ? (
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Catatan</label>
                               <input
                                 type="text"
                                 value={editCatatan}
                                 onChange={(e) => setEditCatatan(e.target.value)}
-                                className="p-1.5 text-xs bg-slate-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-teal-500 w-full"
-                                placeholder="Edit catatan..."
+                                className="w-full p-2 text-xs bg-white border border-gray-250 rounded-xl focus:outline-none"
+                                placeholder="Edit keterangan log..."
                               />
-                            ) : (
-                              <div className="flex flex-col">
-                                <span className="text-[10px] italic">{log.catatan || '-'}</span>
-                                <span className="text-[8px] font-extrabold mt-1 tracking-wider uppercase text-teal-605">
-                                  {log.isMandiri ? '🏡 Mandiri' : '🏥 Resmi Dokter'}
-                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-1 border-t border-gray-50">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEdit(log.id)}
+                                disabled={isSavingEdit}
+                                className="px-3.5 py-1.5 bg-emerald-600 text-white font-extrabold text-xs rounded-xl hover:bg-emerald-700 transition-all flex items-center gap-1 shadow shadow-emerald-100 cursor-pointer"
+                              >
+                                {isSavingEdit ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                Simpan
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                disabled={isSavingEdit}
+                                className="px-3.5 py-1.5 bg-gray-100 border border-gray-200 text-gray-600 font-extrabold text-xs rounded-xl hover:bg-gray-200 transition-all cursor-pointer"
+                              >
+                                Batal
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                              {currentPeserta.diagnosis !== 'Hipertensi' && (
+                                <div className="p-2.5 bg-red-50/40 border border-red-100/50 rounded-xl">
+                                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest block leading-none">Gula Darah</span>
+                                  <span className="font-mono text-[14px] font-black text-slate-800 leading-tight block mt-1">{log.gulaDarah} <span className="text-[9px] font-bold text-gray-400">mg/dL</span></span>
+                                  <span className={`inline-block text-[9px] font-extrabold mt-1 px-1.5 py-0.5 rounded-md ${
+                                    log.statusGulaDarah === 'Tinggi' ? 'text-red-700 bg-red-100/60' : 'text-emerald-700 bg-emerald-50'
+                                  }`}>
+                                    {log.statusGulaDarah || 'Normal'}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {currentPeserta.diagnosis !== 'Diabetes Mellitus' && (
+                                <div className="p-2.5 bg-emerald-50/40 border border-emerald-100/50 rounded-xl">
+                                  <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest block leading-none">Tekanan Darah</span>
+                                  <span className="font-mono text-[14px] font-black text-slate-800 leading-tight block mt-1">{log.sistolik}/{log.diastolik} <span className="text-[9px] font-bold text-gray-400">mmHg</span></span>
+                                  <span className={`inline-block text-[9px] font-extrabold mt-1 px-1.5 py-0.5 rounded-md ${
+                                    log.statusTekananDarah === 'Hipertensi' ? 'text-red-700 bg-red-100/60' : 'text-emerald-700 bg-emerald-50'
+                                  }`}>
+                                    {log.statusTekananDarah || 'Normal'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+
+                            {log.catatan && (
+                              <div className="p-2.5 bg-white text-[11px] text-gray-500 italic rounded-xl border border-slate-100 leading-normal">
+                                Candy: &quot;{log.catatan}&quot;
                               </div>
                             )}
-                          </td>
 
-                          {/* AKSI EDIT & DELETE (DI SINKRONKAN SETIAP KLIK) */}
-                          {activeTab === 'mandiri' && (
-                            <td className="py-2.5 text-center">
-                              {isEditing ? (
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSaveEdit(log.id)}
-                                    disabled={isSavingEdit}
-                                    className="p-1.5 bg-emerald-55 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg transition-all"
-                                    title="Simpan"
-                                  >
-                                    {isSavingEdit ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                      <Check className="w-3.5 h-3.5" />
-                                    )}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={handleCancelEdit}
-                                    disabled={isSavingEdit}
-                                    className="p-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 rounded-lg transition-all"
-                                    title="Batal"
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              ) : isDeletingThis ? (
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                  <span className="text-[8px] text-red-650 font-black uppercase tracking-wider block">Hapus?</span>
-                                  <div className="flex items-center gap-1">
+                            {activeTab === 'mandiri' && (
+                              <div className="flex items-center justify-end gap-1.5 pt-2 border-t border-dashed border-gray-100">
+                                {isDeletingThis ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] text-red-650 font-extrabold">Yakin hapus?</span>
                                     <button
                                       type="button"
                                       onClick={() => handleDeleteLog(log.id)}
                                       disabled={isDeleting}
-                                      className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded text-[8px] transition-all"
+                                      className="px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[10px] font-black cursor-pointer shadow-sm shadow-red-100"
                                     >
-                                      {isDeleting ? '...' : 'Ya'}
+                                      Hapus
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setDeletingLogId(null)}
-                                      disabled={isDeleting}
-                                      className="px-1.5 py-0.5 bg-white border border-gray-200 text-gray-500 rounded text-[8px] transition-all"
+                                      className="px-2.5 py-1 bg-white border border-gray-200 text-gray-500 rounded-lg text-[10px] font-bold cursor-pointer"
                                     >
                                       Batal
                                     </button>
                                   </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleStartEdit(log)}
-                                    className="p-1.5 bg-teal-50 hover:bg-teal-100 border border-teal-200/50 text-teal-700 rounded-lg transition-all cursor-pointer"
-                                    title="Ubah Pemeriksaan"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setDeletingLogId(log.id);
-                                      setEditingLogId(null);
-                                      setTableFeedback({ type: '', message: '' });
-                                    }}
-                                    className="p-1.5 bg-red-50 hover:bg-red-100 border border-red-200/50 text-red-750 rounded-lg transition-all cursor-pointer"
-                                    title="Hapus Pemeriksaan"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEdit(log)}
+                                      className="p-1 px-2.5 bg-teal-50 hover:bg-teal-100 border border-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Pencil className="w-3 h-3" /> Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setDeletingLogId(log.id);
+                                        setEditingLogId(null);
+                                        setTableFeedback({ type: '', message: '' });
+                                      }}
+                                      className="p-1 px-2.5 bg-red-50 hover:bg-red-100 border border-red-100 text-red-650 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    >
+                                      <Trash2 className="w-3 h-3" /> Hapus
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </div>
         </div>
