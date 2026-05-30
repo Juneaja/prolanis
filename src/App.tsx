@@ -820,8 +820,8 @@ export default function App() {
                     <HeartHandshake className="w-5 h-5 text-teal-400" />
                   </div>
                   <div>
-                    <span className="text-xs font-black tracking-widest uppercase text-white block font-sans">PROLANIS BPJS SECURE GATEWAY</span>
-                    <span className="text-[9px] text-gray-500 font-bold uppercase leading-none block font-sans">Dokter & Admin Panel Otentikasi</span>
+                    <span className="text-xs font-black tracking-widest uppercase text-white block font-sans">PROLANIS BPJS</span>
+                    <span className="text-[9px] text-gray-500 font-bold uppercase leading-none block font-sans">Admin Panel Otentikasi</span>
                   </div>
                 </>
               )}
@@ -906,7 +906,7 @@ export default function App() {
                 }`}
               >
                 <UserCheck className="w-3.5 h-3.5 text-teal-400" />
-                Portal Pasien
+                Pasien
               </button>
               <button
                 onClick={() => setCurrentRole('admin')}
@@ -917,7 +917,7 @@ export default function App() {
                 }`}
               >
                 <Building className="w-3.5 h-3.5 text-teal-400" />
-                Panel Dokter (Admin)
+                Panel(Admin)
               </button>
             </div>
 
